@@ -1,0 +1,25 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Python caching
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Log files
+*.log
+logs/
+
+# Data files (avoid uploading massive PDFs or raw data to Github)
+*.pdf
+data/*.pdf
