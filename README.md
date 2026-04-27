@@ -102,7 +102,7 @@ python tests/test_qdrant.py
 ```
 *(Optionally you can run all tests if you decide to execute `pytest` against the `tests/` directory).*
 
----
+--
 
 ## 🛡️ Professional/Production Improvements
 Why is this organized this way?
