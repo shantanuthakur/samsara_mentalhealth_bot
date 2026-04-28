@@ -57,7 +57,7 @@ source .venv/bin/activate
 
 # 3. Install packages
 pip install -r requirements.txt
-```
+``
 
 ### 3️⃣ Configuration (`.env`)
 You should never hardcode your API keys in code! We configure our tool using an environment file.
