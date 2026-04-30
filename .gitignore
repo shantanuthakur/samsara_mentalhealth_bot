@@ -1,25 +1,34 @@
-# Environments
+# ─── Environment ──────────────────────────────
 .env
-.venv
-env/
+backend/.env
+frontend/.env
+.venv/
 venv/
-ENV/
+backend/.venv/
 
-# Python caching
+# ─── Python ───────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
 
-# IDE / Editor configuration
+# ─── Logs ─────────────────────────────────────
+*.log
+backend/logs/
+
+# ─── Qdrant Local DB ─────────────────────────
+backend/qdrant_db/
+
+# ─── Node / Frontend ─────────────────────────
+frontend/node_modules/
+frontend/dist/
+
+# ─── OS / IDE ─────────────────────────────────
+.DS_Store
+Thumbs.db
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Log files
-*.log
-logs/
-
-# Data files (avoid uploading massive PDFs or raw data to Github)
+# ─── Data (large PDFs) ───────────────────────
 *.pdf
-data/*.pdf

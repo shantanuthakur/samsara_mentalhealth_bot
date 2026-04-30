@@ -3,7 +3,7 @@ import Sidebar from '../components/Sidebar'
 import ChatBubble from '../components/ChatBubble'
 import monkIcon from '/monk.png'
 
-const API_URL = 'http://localhost:4000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 const CHAT_HISTORY_KEY = 'samsara_chat_history'
 const MAX_HISTORY = 8
 

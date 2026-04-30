@@ -1,7 +1,16 @@
+"""
+Samsara Mental Health Chatbot — API Server
+===========================================
+Run this AFTER seeding the database (python seed.py).
+
+Usage:
+    python app.py              # Start server on port 4000
+    python app.py --port 8080  # Start on custom port
+"""
+
 import sys
 import os
 
-# Ensure the backend directory is in the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI, HTTPException
@@ -10,11 +19,11 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from src.config import Config, logger
 from src.generate import generate_answer
-from src.seed import run_pipeline
 
 # Validate configuration on startup
 try:
     Config.validate()
+    logger.info("✅ Configuration validated successfully.")
 except ValueError as e:
     logger.error(f"Configuration error: {e}")
 
@@ -24,34 +33,31 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration — frontend runs on port 3000
+# CORS — frontend runs on port configured in .env
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[f"http://localhost:{Config.FRONTEND_PORT}", f"http://127.0.0.1:{Config.FRONTEND_PORT}"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# ─── Request / Response Models ────────────────────────────────────────────────
+# ─── Models ───────────────────────────────────────────────────────────────────
 
 class UserProfile(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     age: int = Field(..., ge=10, le=120)
     gender: str = Field(..., min_length=1)
 
-
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1)
     user_profile: Optional[UserProfile] = None
     conversation_history: Optional[list[dict]] = None
 
-
 class ChatResponse(BaseModel):
     response: str
     status: str = "success"
-
 
 class HealthResponse(BaseModel):
     status: str
@@ -59,12 +65,7 @@ class HealthResponse(BaseModel):
     version: str
 
 
-class SeedResponse(BaseModel):
-    status: str
-    message: str
-
-
-# ─── API Endpoints ────────────────────────────────────────────────────────────
+# ─── Endpoints ────────────────────────────────────────────────────────────────
 
 @app.get("/api/health", response_model=HealthResponse)
 async def health_check():
@@ -75,25 +76,9 @@ async def health_check():
         version="1.0.0"
     )
 
-
-@app.post("/api/seed", response_model=SeedResponse)
-async def seed_database():
-    """Seed the Qdrant database with chunks.json data."""
-    try:
-        data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "chunks.json")
-        run_pipeline(data_path)
-        return SeedResponse(status="success", message="Database seeded successfully with chunks.json data.")
-    except Exception as e:
-        logger.error(f"Seed endpoint error: {e}")
-        raise HTTPException(status_code=500, detail=f"Seeding failed: {str(e)}")
-
-
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    """
-    Process a chat message and return an AI-generated response.
-    Supports user profile context and conversation history (last 8 messages).
-    """
+    """Process a chat message and return an AI-generated response."""
     try:
         user_profile_dict = None
         if request.user_profile:
@@ -121,5 +106,11 @@ async def chat(request: ChatRequest):
 
 
 if __name__ == "__main__":
+    import argparse
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=4000, reload=True)
+
+    parser = argparse.ArgumentParser(description="Samsara API Server")
+    parser.add_argument("--port", type=int, default=4000, help="Port (default: 4000)")
+    args = parser.parse_args()
+
+    uvicorn.run("app:app", host="0.0.0.0", port=args.port, reload=True)
