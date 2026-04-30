@@ -2,13 +2,14 @@ from src.config import Config, logger
 from src.database import get_qdrant_client
 from src.embeddings import get_embedding
 
-def retrieve(query: str, top_k: int = 3) -> list[str]:
+def retrieve(query: str, top_k: int = 5, score_threshold: float = 0.3) -> list[str]:
     """
     Retrieves the most semantically similar context chunks for a given query.
     
     Args:
         query (str): The search query.
-        top_k (int, optional): The number of chunks to retrieve. Defaults to 3.
+        top_k (int, optional): The number of chunks to retrieve. Defaults to 5.
+        score_threshold (float, optional): Minimum similarity score. Defaults to 0.3.
         
     Returns:
         list[str]: A list of relevant text chunks.
@@ -29,7 +30,8 @@ def retrieve(query: str, top_k: int = 3) -> list[str]:
         results = client.query_points(
             collection_name=Config.COLLECTION_NAME,
             query=vector,
-            limit=top_k
+            limit=top_k,
+            score_threshold=score_threshold
         )
         
         chunks = [r.payload["text"] for r in results.points]

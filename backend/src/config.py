@@ -1,8 +1,15 @@
 import os
 import logging
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from project root (one level up from backend/)
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
+else:
+    # Fallback: try loading from current directory
+    load_dotenv()
 
 # Logging Configuration
 logging.basicConfig(
