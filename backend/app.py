@@ -110,7 +110,7 @@ if __name__ == "__main__":
     import uvicorn
 
     parser = argparse.ArgumentParser(description="Samsara API Server")
-    parser.add_argument("--port", type=int, default=4000, help="Port (default: 4000)")
+    parser.add_argument("--port", type=int, default=Config.BACKEND_PORT, help=f"Port (default: {Config.BACKEND_PORT})")
     args = parser.parse_args()
 
     uvicorn.run("app:app", host="0.0.0.0", port=args.port, reload=True)
