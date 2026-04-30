@@ -1,9 +1,20 @@
-import { useState } from 'react'
-import monkIcon from '/monk.png'
+import { useState, useEffect } from 'react'
 
-export default function Onboarding({ onComplete }) {
+export default function ProfileModal({ isOpen, onClose, userProfile, onSave, required }) {
   const [form, setForm] = useState({ name: '', age: '', gender: '' })
   const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (userProfile) {
+      setForm({
+        name: userProfile.name || '',
+        age: userProfile.age || '',
+        gender: userProfile.gender || ''
+      })
+    }
+  }, [userProfile, isOpen])
+
+  if (!isOpen) return null
 
   const validate = () => {
     const newErrors = {}
@@ -17,7 +28,8 @@ export default function Onboarding({ onComplete }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (validate()) {
-      onComplete({ ...form, age: parseInt(form.age, 10) })
+      onSave({ ...form, age: parseInt(form.age, 10) })
+      onClose()
     }
   }
 
@@ -27,18 +39,25 @@ export default function Onboarding({ onComplete }) {
   }
 
   return (
-    <div className="onboarding-page">
-      <div className="onboarding-card">
-        <div className="onboarding-logo">
-          <img src={monkIcon} alt="Samsara" className="onboarding-logo-img" />
-          <h1>Samsara Mental Health AI</h1>
-        </div>
-        <p className="onboarding-subtitle">
-          Your compassionate mental health companion.<br />
-          Let's get to know you a little better.
+    <div className="modal-overlay">
+      <div className="modal-container">
+        {!required && (
+          <button className="modal-close" onClick={onClose} aria-label="Close modal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
+        
+        <h2 className="modal-title">{required ? 'Welcome to Samsara Mental Health AI 🌿' : 'Your Profile'}</h2>
+        <p className="modal-subtitle">
+          {required 
+            ? "Before we begin, please tell me a little about yourself so I can support you better." 
+            : "Update your details to help me personalize your experience."}
         </p>
 
-        <form className="onboarding-form" onSubmit={handleSubmit}>
+        <form className="modal-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="name">Your Name <span className="required">*</span></label>
             <input
@@ -85,8 +104,8 @@ export default function Onboarding({ onComplete }) {
             {errors.gender && <span className="form-error">{errors.gender}</span>}
           </div>
 
-          <button type="submit" className="form-submit-btn">
-            Begin Your Journey ✨
+          <button type="submit" className="form-submit-btn" style={{ marginTop: '16px' }}>
+            Save Profile
           </button>
         </form>
       </div>

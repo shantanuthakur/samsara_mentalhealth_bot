@@ -14,16 +14,17 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional
 from src.config import Config, logger
-from src.generate import generate_answer
+from src.generate import generate_answer, generate_answer_stream
 
 # Validate configuration on startup
 try:
     Config.validate()
-    logger.info("✅ Configuration validated successfully.")
+    logger.info("Configuration validated successfully.")
 except ValueError as e:
     logger.error(f"Configuration error: {e}")
 
@@ -76,7 +77,7 @@ async def health_check():
         version="1.0.0"
     )
 
-@app.post("/api/chat", response_model=ChatResponse)
+@app.post("/api/chat")
 async def chat(request: ChatRequest):
     """Process a chat message and return an AI-generated response."""
     try:
@@ -89,13 +90,14 @@ async def chat(request: ChatRequest):
         if history and len(history) > 8:
             history = history[-8:]
 
-        response = generate_answer(
-            query=request.message,
-            user_profile=user_profile_dict,
-            conversation_history=history
+        return StreamingResponse(
+            generate_answer_stream(
+                query=request.message,
+                user_profile=user_profile_dict,
+                conversation_history=history
+            ),
+            media_type="text/plain"
         )
-
-        return ChatResponse(response=response)
 
     except Exception as e:
         logger.error(f"Chat endpoint error: {e}")

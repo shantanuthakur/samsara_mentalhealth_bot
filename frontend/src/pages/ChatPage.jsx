@@ -7,10 +7,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 const CHAT_HISTORY_KEY = 'samsara_chat_history'
 const MAX_HISTORY = 8
 
-export default function ChatPage({ userProfile, onLogout }) {
+export default function ChatPage({ userProfile, onOpenProfile }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
   const hasSentGreeting = useRef(false)
@@ -34,11 +35,12 @@ export default function ChatPage({ userProfile, onLogout }) {
 
   // Send initial greeting if no saved history
   useEffect(() => {
-    if (!hasSentGreeting.current && userProfile && messages.length === 0) {
+    if (!hasSentGreeting.current && messages.length === 0) {
       hasSentGreeting.current = true
+      const namePart = userProfile?.name ? ` ${userProfile.name}` : ''
       const greeting = {
         role: 'assistant',
-        content: `Hello ${userProfile.name}! 🌿 Welcome to Samsara. I'm your compassionate mental health companion, here to listen and support you.\n\nHow are you feeling today? Take your time — there's no rush. 💚`,
+        content: `Hello${namePart}! 🌿 Welcome to Samsara Mental Health AI. I'm your compassionate mental health companion, here to listen and support you.\n\nHow are you feeling today? Take your time — there's no rush. 💚`,
         timestamp: new Date().toISOString()
       }
       setMessages([greeting])
@@ -98,13 +100,33 @@ export default function ChatPage({ userProfile, onLogout }) {
 
       if (!res.ok) throw new Error('Server error')
 
-      const data = await res.json()
       const botMessage = {
         role: 'assistant',
-        content: data.response,
+        content: '',
         timestamp: new Date().toISOString()
       }
+      
       setMessages(prev => [...prev, botMessage])
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let done = false
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read()
+        done = doneReading
+        if (value) {
+          const chunkValue = decoder.decode(value, { stream: true })
+          setMessages(prev => {
+            const newMessages = [...prev]
+            newMessages[newMessages.length - 1] = {
+              ...newMessages[newMessages.length - 1],
+              content: newMessages[newMessages.length - 1].content + chunkValue
+            }
+            return newMessages
+          })
+        }
+      }
     } catch (err) {
       const errorMessage = {
         role: 'assistant',
@@ -145,12 +167,19 @@ export default function ChatPage({ userProfile, onLogout }) {
     }, 300)
   }
 
+  const getInitial = () => {
+    if (userProfile?.name) return userProfile.name.charAt(0).toUpperCase()
+    return '?'
+  }
+
   return (
     <div className="app-layout">
       <Sidebar
         userProfile={userProfile}
         onNewChat={handleNewChat}
-        onLogout={onLogout}
+        onOpenProfile={onOpenProfile}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       <main className="chat-area">
@@ -158,10 +187,12 @@ export default function ChatPage({ userProfile, onLogout }) {
         <div className="chat-header">
           <img src={monkIcon} alt="Samsara" className="chat-header-icon" />
           <div>
-            <h2>Samsara — Mental Health Companion</h2>
-            <p className="chat-header-subtitle">Powered by AI • Not a substitute for professional help</p>
+            <h2>Samsara Mental Health AI</h2>
+            <p className="chat-header-subtitle">Mental Health AI Advisor</p>
           </div>
-          <div className="chat-header-dot" />
+          <div className="chat-header-avatar" onClick={() => setIsSidebarOpen(true)}>
+            {getInitial()}
+          </div>
         </div>
 
         {/* Messages */}
@@ -169,8 +200,53 @@ export default function ChatPage({ userProfile, onLogout }) {
           {messages.length === 0 && !isTyping && (
             <div className="welcome-message">
               <img src={monkIcon} alt="Samsara" className="welcome-icon-img" />
-              <h2>Welcome to Samsara</h2>
-              <p>A safe space for your thoughts and feelings. Start by saying hello, or share what's on your mind.</p>
+              <h2>Welcome to Samsara Mental Health AI</h2>
+              <p>A safe, private space for your thoughts and feelings. I'm here to listen — no judgment, just support.</p>
+              <div style={{ 
+                display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '28px', justifyContent: 'center', maxWidth: '460px' 
+              }}>
+                {[
+                  "I'm feeling anxious lately 😟",
+                  "I need help with stress 🌿",
+                  "I can't sleep well 😴",
+                  "I just want to talk 💬"
+                ].map((suggestion, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setInput(suggestion)
+                      if (textareaRef.current) textareaRef.current.focus()
+                    }}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '24px',
+                      border: '1px solid var(--border-glass)',
+                      background: 'rgba(255,253,250,0.8)',
+                      color: 'var(--text-secondary)',
+                      fontFamily: 'var(--font-family)',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      backdropFilter: 'blur(4px)',
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = 'var(--bg-glass-hover)'
+                      e.currentTarget.style.borderColor = 'var(--border-accent)'
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                      e.currentTarget.style.boxShadow = 'var(--shadow-glow)'
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,253,250,0.8)'
+                      e.currentTarget.style.borderColor = 'var(--border-glass)'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -182,16 +258,7 @@ export default function ChatPage({ userProfile, onLogout }) {
             />
           ))}
 
-          {isTyping && (
-            <div className="typing-indicator">
-              <div className="message-avatar">
-                <img src={monkIcon} alt="Samsara" className="avatar-icon" />
-              </div>
-              <div className="typing-dots">
-                <span /><span /><span />
-              </div>
-            </div>
-          )}
+
 
           <div ref={messagesEndRef} />
         </div>
@@ -220,9 +287,6 @@ export default function ChatPage({ userProfile, onLogout }) {
               </svg>
             </button>
           </div>
-          <p className="chat-disclaimer">
-            Samsara is an AI companion and does not replace professional mental health care.
-          </p>
         </div>
       </main>
     </div>

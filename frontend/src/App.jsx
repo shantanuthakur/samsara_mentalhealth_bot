@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import Onboarding from './pages/Onboarding'
 import ChatPage from './pages/ChatPage'
+import ProfileModal from './components/ProfileModal'
 
 function App() {
   const [userProfile, setUserProfile] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
 
   useEffect(() => {
     const savedProfile = localStorage.getItem('samsara_user_profile')
@@ -15,6 +16,9 @@ function App() {
       } catch (e) {
         localStorage.removeItem('samsara_user_profile')
       }
+    } else {
+      // No profile found — force the modal open
+      setIsProfileModalOpen(true)
     }
     setIsLoading(false)
   }, [])
@@ -24,22 +28,27 @@ function App() {
     setUserProfile(profile)
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('samsara_user_profile')
-    localStorage.removeItem('samsara_chat_history')
-    setUserProfile(null)
-  }
-
   if (isLoading) return null
 
   return (
     <>
       <div className="bg-ambient" />
-      {!userProfile ? (
-        <Onboarding onComplete={handleProfileComplete} />
-      ) : (
-        <ChatPage userProfile={userProfile} onLogout={handleLogout} />
-      )}
+      
+      <ChatPage 
+        userProfile={userProfile} 
+        onOpenProfile={() => setIsProfileModalOpen(true)} 
+      />
+
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => {
+          // Only allow closing if profile is already saved
+          if (userProfile) setIsProfileModalOpen(false)
+        }}
+        userProfile={userProfile}
+        onSave={handleProfileComplete}
+        required={!userProfile}
+      />
     </>
   )
 }

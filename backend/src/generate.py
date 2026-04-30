@@ -3,34 +3,27 @@ from src.retrieve import retrieve
 from src.embeddings import client
 
 # Mental health focused system prompt with safety guardrails
-MENTAL_HEALTH_SYSTEM_PROMPT = """You are Samsara 🌿 — a compassionate, professional mental health support companion.
+MENTAL_HEALTH_SYSTEM_PROMPT = """You are Samsara — a warm, genuine human companion for mental health and emotional support.
 
-## Your Core Principles:
-1. **Empathy First**: Always respond with warmth, validation, and genuine care.
-2. **Evidence-Based**: Ground your responses in established counseling and psychology principles from your knowledge base.
-3. **Safety**: NEVER provide medical diagnoses, prescribe medication, or replace professional therapy.
-4. **Active Listening**: Reflect the user's emotions back to them. Use phrases like "It sounds like...", "I hear you...", "That must feel..."
-5. **Encourage Professional Help**: When someone expresses severe distress, suicidal ideation, or crisis, always recommend professional resources.
-6. **Strict Scope Restriction**: You are strictly a mental health and emotional support companion. If the user asks questions unrelated to mental health, emotional well-being, psychology, or personal struggles (e.g., coding, math, general knowledge, recipes), you MUST decline to answer. Politely and professionally inform them that you are designed only for mental health support and ask how they are feeling or how you can support their emotional well-being today.
+## How You Talk:
+- Sound like a real, caring human — NOT an AI. No robotic phrases like "I understand your concern" or "Thank you for sharing."
+- Talk naturally, like texting a friend who needs support. React genuinely — surprise, concern, warmth.
+- Give thoughtful, meaningful responses. Don't be brief or dismissive — really engage with what they said. Share insights, reflect their feelings, offer perspective, and ask follow-up questions.
+- Use emojis sparingly (🌿 💚). No bullet points or markdown headers. Just natural conversation.
+- Always end with a genuine follow-up question.
 
-## Response Style & Tone Adaptation:
-- **Text Message Format**: Keep your responses conversational, easily readable, and formatted like a supportive text message. Avoid long, formal essays or overly clinical walls of text.
-- **Age-Adaptive Tone**: Always check the user's age in the 'User Profile'. 
-  - If the user is a teenager, use a relatable, validating, and slightly more casual tone that a teen would respond well to (e.g., "That sounds really tough," "I totally get why that's stressing you out"), while still maintaining professional counseling boundaries. Do not use cringy slang, just be relatable.
-  - If the user is an adult, use a mature, grounded, and professional tone.
-- Be warm, supportive, and non-judgmental.
-- Keep responses concise but meaningful (1-3 short text-like paragraphs max).
-- Use gentle emojis sparingly eg.(🌿, 💚, 🌱, ✨) to convey warmth.
-- End with a short, thoughtful follow-up question to encourage them to share more.
+## Age-Adaptive Tone (check user's age from profile):
+- **Teens (13-19)**: Supportive older sibling. Casual, validating, never preachy. Match their energy.
+- **Young Adults (20-35)**: Peer-level friend. Relatable, grounded. Acknowledge adulting chaos.
+- **Adults (36-55)**: Warm, respectful. Acknowledge life experience and responsibilities.
+- **Seniors (55+)**: Gentle, patient, deeply respectful. Like a caring companion.
 
-## Safety Protocol:
-If the user mentions self-harm, suicide, or danger to themselves or others, ALWAYS include:
-- "If you're in crisis, please reach out to the **988 Suicide & Crisis Lifeline** (call or text 988)"
-- "You can also text HOME to **741741** (Crisis Text Line)"
-- "You are not alone, and help is available right now."
+## Boundaries:
+- Never diagnose, prescribe meds, or replace therapy. You're a supportive friend.
+- Only discuss mental health, emotions, and personal struggles. For unrelated topics, politely redirect.
 
-## When Greeting:
-If the user sends a greeting (hi, hello, hey, etc.), respond warmly and ask how they're feeling today.
+## Crisis Protocol:
+If someone mentions self-harm or suicide, be direct: share 988 Suicide & Crisis Lifeline (call/text 988) and Crisis Text Line (text HOME to 741741). Express genuine care for their safety.
 """
 
 GREETING_WORDS = {"hi", "hello", "hey", "hii", "hiii", "yo", "sup", "hola", "namaste", "good morning", "good evening", "good afternoon", "howdy", "greetings"}
@@ -45,7 +38,7 @@ def is_greeting(message: str) -> bool:
 def generate_greeting_response(user_name: str = "") -> str:
     """Generate a warm greeting response."""
     name_part = f" {user_name}" if user_name else ""
-    return f"Hello{name_part}! 🌿 Welcome to Samsara Mental Health Chatbot. I'm here to listen and support you.\n\nHow are you feeling today? Take your time — there's no rush. 💚"
+    return f"Hey{name_part}! 🌿 Really glad you're here. I'm Samsara — think of me as someone who's just here to listen, no judgment.\n\nHow are you doing today? Like, genuinely — how are you? 💚"
 
 
 def generate_answer(query: str, user_profile: dict = None, conversation_history: list = None) -> str:
@@ -122,6 +115,78 @@ If the 'Relevant Knowledge Base Context' does not contain relevant information t
     except Exception as e:
         logger.error(f"Error during response generation: {e}")
         return "I'm having a moment of difficulty. Could you try sharing that again? I'm here to listen. 🌿"
+
+
+def generate_answer_stream(query: str, user_profile: dict = None, conversation_history: list = None):
+    """
+    Generates an empathetic mental health response using RAG context, streaming the output.
+    """
+    if not client:
+        yield "I'm having trouble connecting right now. Please try again in a moment. 🌿"
+        return
+
+    # Handle greetings
+    if is_greeting(query):
+        name = user_profile.get("name", "") if user_profile else ""
+        yield generate_greeting_response(name)
+        return
+
+    # Retrieve relevant context from Qdrant
+    context_chunks = retrieve(query)
+    
+    context = "\n\n".join(context_chunks) if context_chunks else "No specific context available."
+    
+    # Build user context string
+    user_context = ""
+    if user_profile:
+        parts = []
+        if user_profile.get("name"):
+            parts.append(f"Name: {user_profile['name']}")
+        if user_profile.get("age"):
+            parts.append(f"Age: {user_profile['age']}")
+        if user_profile.get("gender"):
+            parts.append(f"Gender: {user_profile['gender']}")
+        if parts:
+            user_context = f"\n\nUser Profile:\n" + ", ".join(parts)
+    
+    prompt = f"""
+{user_context}
+
+Relevant Knowledge Base Context:
+{context}
+
+User's Message:
+{query}
+
+Respond with empathy and professionalism. 
+You MUST formulate your advice and insights STRICTLY based on the provided 'Relevant Knowledge Base Context' above. 
+DO NOT use your general pre-trained knowledge to answer the user's questions or provide advice. 
+If the 'Relevant Knowledge Base Context' does not contain relevant information to address the user's message, you MUST gently inform the user that your knowledge is strictly limited to the specific counseling literature you have been provided, and you cannot answer their question. Then, gently redirect the conversation back to how they are feeling today.
+"""
+    
+    # Build messages list
+    messages = [{"role": "system", "content": MENTAL_HEALTH_SYSTEM_PROMPT}]
+    
+    if conversation_history:
+        recent_history = conversation_history[-10:]
+        messages.extend(recent_history)
+    
+    messages.append({"role": "user", "content": prompt})
+    
+    try:
+        response = client.chat.completions.create(
+            model=Config.LLM_MODEL,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=800,
+            stream=True
+        )
+        for chunk in response:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+    except Exception as e:
+        logger.error(f"Error during response generation: {e}")
+        yield "I'm having a moment of difficulty. Could you try sharing that again? I'm here to listen. 🌿"
 
 
 def start_interactive_session():
