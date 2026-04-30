@@ -38,21 +38,14 @@ export default function Sidebar({ userProfile, onNewChat, onLogout }) {
 
       {/* User Profile Card */}
       <div className="sidebar-profile">
-        <div className="sidebar-profile-header">
+        <div className="sidebar-profile-header" style={{ marginBottom: 0 }}>
           <div className="sidebar-profile-avatar">{getInitial()}</div>
           <div>
             <div className="sidebar-profile-name">{userProfile?.name || 'User'}</div>
-            <div className="sidebar-profile-meta">Active now</div>
-          </div>
-        </div>
-        <div className="sidebar-profile-details">
-          <div className="sidebar-profile-detail">
-            <span>Age</span>
-            <span>{userProfile?.age || '—'}</span>
-          </div>
-          <div className="sidebar-profile-detail">
-            <span>Gender</span>
-            <span>{userProfile?.gender || '—'}</span>
+            <div className="sidebar-profile-meta" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
+              Active now
+            </div>
           </div>
         </div>
       </div>

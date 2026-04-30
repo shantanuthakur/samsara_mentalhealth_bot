@@ -26,6 +26,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('samsara_user_profile')
+    localStorage.removeItem('samsara_chat_history')
     setUserProfile(null)
   }
 
