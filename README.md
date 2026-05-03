@@ -164,7 +164,6 @@ Processes user messages, queries the Qdrant database for mental health context, 
 }
 ```
 
----
 
 ## ⚙️ Architecture Notes
 * **Strict Grounding:** The AI prompt is strictly instructed to *only* answer mental health questions based on the seeded Qdrant database. If asked about unrelated topics (like coding or math), it will politely decline.
