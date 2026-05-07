@@ -168,7 +168,7 @@ If the 'Relevant Knowledge Base Context' does not contain relevant information t
     messages = [{"role": "system", "content": MENTAL_HEALTH_SYSTEM_PROMPT}]
     
     if conversation_history:
-        recent_history = conversation_history[-10:]
+        recent_history = conversation_history[-6:]
         messages.extend(recent_history)
     
     messages.append({"role": "user", "content": prompt})
@@ -178,7 +178,8 @@ If the 'Relevant Knowledge Base Context' does not contain relevant information t
             model=Config.LLM_MODEL,
             messages=messages,
             temperature=0.7,
-            max_tokens=800,
+            max_tokens=500,
+            top_p=0.9,
             stream=True
         )
         for chunk in response:

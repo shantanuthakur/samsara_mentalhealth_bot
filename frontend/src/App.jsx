@@ -26,6 +26,7 @@ function App() {
   const handleProfileComplete = (profile) => {
     localStorage.setItem('samsara_user_profile', JSON.stringify(profile))
     setUserProfile(profile)
+    setIsProfileModalOpen(false)
   }
 
   if (isLoading) return null
@@ -33,22 +34,25 @@ function App() {
   return (
     <>
       <div className="bg-ambient" />
-      
-      <ChatPage 
-        userProfile={userProfile} 
-        onOpenProfile={() => setIsProfileModalOpen(true)} 
-      />
 
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => {
-          // Only allow closing if profile is already saved
-          if (userProfile) setIsProfileModalOpen(false)
-        }}
+      <ChatPage
         userProfile={userProfile}
         onSave={handleProfileComplete}
-        required={!userProfile}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
       />
+
+      {/* Force-open profile modal when no profile exists */}
+      {isProfileModalOpen && (
+        <ProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => {
+            if (userProfile) setIsProfileModalOpen(false)
+          }}
+          userProfile={userProfile}
+          onSave={handleProfileComplete}
+          required={!userProfile}
+        />
+      )}
     </>
   )
 }
