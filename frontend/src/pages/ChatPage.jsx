@@ -12,7 +12,7 @@ const WELCOME_SUGGESTIONS = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
       </svg>
     ),
     iconColor: '#C4956A',
@@ -22,9 +22,9 @@ const WELCOME_SUGGESTIONS = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 16v-4"/>
-        <path d="M12 8h.01"/>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4" />
+        <path d="M12 8h.01" />
       </svg>
     ),
     iconColor: '#9D6B33',
@@ -34,10 +34,10 @@ const WELCOME_SUGGESTIONS = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-        <line x1="9" y1="9" x2="9.01" y2="9"/>
-        <line x1="15" y1="9" x2="15.01" y2="9"/>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+        <line x1="9" y1="9" x2="9.01" y2="9" />
+        <line x1="15" y1="9" x2="15.01" y2="9" />
       </svg>
     ),
     iconColor: '#8C5D30',
@@ -47,7 +47,7 @@ const WELCOME_SUGGESTIONS = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/>
+        <path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z" />
       </svg>
     ),
     iconColor: '#B58452',
@@ -59,11 +59,11 @@ const WELCOME_SUGGESTIONS = [
 // Extract user profile info from the bot's parsed response
 function extractProfileFromConversation(messages) {
   const profile = {}
-  
+
   for (const msg of messages) {
     if (msg.role === 'user') {
       const text = msg.content.toLowerCase()
-      
+
       // Try to extract name from common patterns
       const namePatterns = [
         /(?:my name is|i'm|i am|call me|it's|its)\s+([a-zA-Z]+)/i,
@@ -80,7 +80,7 @@ function extractProfileFromConversation(messages) {
           }
         }
       }
-      
+
       // Try to extract age
       const agePatterns = [
         /(?:i'm|i am|im)\s+(\d{1,3})\s*(?:years?\s*old|yrs?\s*old|yo)?/i,
@@ -96,7 +96,7 @@ function extractProfileFromConversation(messages) {
           }
         }
       }
-      
+
       // Try to extract gender
       const genderPatterns = [
         /(?:i'm|i am|im)\s+(?:a\s+)?(male|female|man|woman|boy|girl|non-binary|nonbinary|nb)/i,
@@ -115,7 +115,7 @@ function extractProfileFromConversation(messages) {
       }
     }
   }
-  
+
   return profile
 }
 
@@ -151,7 +151,7 @@ export default function ChatPage({ userProfile, onProfileUpdate }) {
       hasSentGreeting.current = true
       const greeting = {
         role: 'assistant',
-        content: `Hey there! 🌿 Welcome to Samsara. I'm your mental health companion — think of me as a caring friend who's always here to listen.\n\nBefore we dive in, I'd love to know your name! What should I call you? 💚`,
+        content: `Hey there! 🌿 I'm your Samsara mental health Ai Bot — think of me as a caring friend who's always here to listen.\n\nBefore we dive in, I'd love to know your name! What should I call you? 💚`,
         timestamp: new Date().toISOString()
       }
       setMessages([greeting])
@@ -336,9 +336,10 @@ export default function ChatPage({ userProfile, onProfileUpdate }) {
             </div>
           </div>
           <div className="chat-header-info">
-            <h2 className="chat-header-title">Mental Health Bot</h2>
+            <h2 className="chat-header-title">Mental Health AI </h2>
             <p className="chat-header-subtitle">
-              Your supportive companion
+              <span className="status-dot"></span>
+              Mental Health Ai Advisor
             </p>
           </div>
 
@@ -352,9 +353,9 @@ export default function ChatPage({ userProfile, onProfileUpdate }) {
               aria-label="New Chat"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                <line x1="12" y1="8" x2="12" y2="14"/>
-                <line x1="9" y1="11" x2="15" y2="11"/>
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                <line x1="12" y1="8" x2="12" y2="14" />
+                <line x1="9" y1="11" x2="15" y2="11" />
               </svg>
             </button>
           </div>
@@ -450,7 +451,6 @@ export default function ChatPage({ userProfile, onProfileUpdate }) {
               </svg>
             </button>
           </div>
-          <p className="chat-disclaimer">Samsara is an AI companion, not a medical professional.</p>
         </div>
       </main>
     </div>
