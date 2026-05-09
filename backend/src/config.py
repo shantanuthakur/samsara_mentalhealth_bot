@@ -40,6 +40,7 @@ class Config:
     LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
     BACKEND_PORT = int(os.getenv("BACKEND_PORT", "4000"))
     FRONTEND_PORT = int(os.getenv("FRONTEND_PORT", "3000"))
+    ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", f"http://localhost:{FRONTEND_PORT},http://127.0.0.1:{FRONTEND_PORT}").split(",")
 
     @classmethod
     def validate(cls):

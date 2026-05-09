@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import ChatBubble from '../components/ChatBubble'
-import ProfileModal from '../components/ProfileModal'
 import monkIcon from '/monk.png'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
@@ -57,12 +56,74 @@ const WELCOME_SUGGESTIONS = [
   },
 ]
 
-export default function ChatPage({ userProfile, onSave }) {
+// Extract user profile info from the bot's parsed response
+function extractProfileFromConversation(messages) {
+  const profile = {}
+  
+  for (const msg of messages) {
+    if (msg.role === 'user') {
+      const text = msg.content.toLowerCase()
+      
+      // Try to extract name from common patterns
+      const namePatterns = [
+        /(?:my name is|i'm|i am|call me|it's|its)\s+([a-zA-Z]+)/i,
+        /^([a-zA-Z]+)$/i,  // Single word response (likely a name in context)
+      ]
+      for (const pattern of namePatterns) {
+        const match = msg.content.match(pattern)
+        if (match && match[1]) {
+          const candidate = match[1].trim()
+          // Filter out common non-name words
+          const nonNames = new Set(['feeling', 'doing', 'good', 'bad', 'fine', 'great', 'okay', 'ok', 'yes', 'no', 'not', 'really', 'very', 'just', 'well', 'thanks', 'thank', 'hi', 'hello', 'hey', 'sure', 'yeah', 'yep', 'nope', 'male', 'female', 'man', 'woman', 'boy', 'girl', 'stressed', 'anxious', 'depressed', 'sad', 'happy', 'angry', 'worried'])
+          if (!nonNames.has(candidate.toLowerCase()) && candidate.length > 1 && candidate.length < 20) {
+            profile.name = candidate.charAt(0).toUpperCase() + candidate.slice(1).toLowerCase()
+          }
+        }
+      }
+      
+      // Try to extract age
+      const agePatterns = [
+        /(?:i'm|i am|im)\s+(\d{1,3})\s*(?:years?\s*old|yrs?\s*old|yo)?/i,
+        /(?:age|aged)\s*(?:is)?\s*(\d{1,3})/i,
+        /^(\d{1,3})$/,  // Just a number (likely age in context)
+      ]
+      for (const pattern of agePatterns) {
+        const match = msg.content.match(pattern)
+        if (match && match[1]) {
+          const age = parseInt(match[1], 10)
+          if (age >= 10 && age <= 120) {
+            profile.age = age
+          }
+        }
+      }
+      
+      // Try to extract gender
+      const genderPatterns = [
+        /(?:i'm|i am|im)\s+(?:a\s+)?(male|female|man|woman|boy|girl|non-binary|nonbinary|nb)/i,
+        /(?:gender|sex)\s*(?:is)?\s*:?\s*(male|female|man|woman|non-binary|nonbinary)/i,
+        /^(male|female|man|woman|boy|girl|non-binary|nonbinary|nb|prefer not to say)$/i,
+      ]
+      for (const pattern of genderPatterns) {
+        const match = msg.content.match(pattern)
+        if (match && match[1]) {
+          const g = match[1].toLowerCase()
+          if (['male', 'man', 'boy'].includes(g)) profile.gender = 'Male'
+          else if (['female', 'woman', 'girl'].includes(g)) profile.gender = 'Female'
+          else if (['non-binary', 'nonbinary', 'nb'].includes(g)) profile.gender = 'Non-binary'
+          else if (g === 'prefer not to say') profile.gender = 'Prefer not to say'
+        }
+      }
+    }
+  }
+  
+  return profile
+}
+
+export default function ChatPage({ userProfile, onProfileUpdate }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
   const hasSentGreeting = useRef(false)
@@ -88,20 +149,29 @@ export default function ChatPage({ userProfile, onSave }) {
   useEffect(() => {
     if (!hasSentGreeting.current && messages.length === 0) {
       hasSentGreeting.current = true
-      const namePart = userProfile?.name ? ` ${userProfile.name}` : ''
       const greeting = {
         role: 'assistant',
-        content: `Hello${namePart}! 🌿 Welcome to Samsara Mental Health AI. I'm your compassionate mental health companion, here to listen and support you.\n\nHow are you feeling today? Take your time — there's no rush. 💚`,
+        content: `Hey there! 🌿 Welcome to Samsara. I'm your mental health companion — think of me as a caring friend who's always here to listen.\n\nBefore we dive in, I'd love to know your name! What should I call you? 💚`,
         timestamp: new Date().toISOString()
       }
       setMessages([greeting])
     }
-  }, [userProfile, messages.length])
+  }, [messages.length])
 
   // Save chat history to localStorage whenever messages change
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages))
+    }
+  }, [messages])
+
+  // Extract profile from conversation whenever messages change
+  useEffect(() => {
+    if (messages.length > 1) {
+      const extracted = extractProfileFromConversation(messages)
+      if (Object.keys(extracted).length > 0) {
+        onProfileUpdate(extracted)
+      }
     }
   }, [messages])
 
@@ -221,18 +291,14 @@ export default function ChatPage({ userProfile, onSave }) {
     hasSentGreeting.current = false
     setTimeout(() => {
       hasSentGreeting.current = true
+      const namePart = userProfile?.name ? `, ${userProfile.name}` : ''
       const newGreeting = [{
         role: 'assistant',
-        content: `Welcome back, ${userProfile?.name || 'friend'}! 🌿\n\nHow are you feeling right now? I'm here to listen. 💚`,
+        content: `Welcome back${namePart}! 🌿\n\nHow are you feeling right now? I'm here to listen. 💚`,
         timestamp: new Date().toISOString()
       }]
       setMessages(newGreeting)
     }, 300)
-  }
-
-  const getInitial = () => {
-    if (userProfile?.name) return userProfile.name.charAt(0).toUpperCase()
-    return '?'
   }
 
   // Determine if we show the welcome screen (no messages yet, not typing)
@@ -243,7 +309,6 @@ export default function ChatPage({ userProfile, onSave }) {
       <Sidebar
         userProfile={userProfile}
         onNewChat={handleNewChat}
-        onOpenProfile={() => setIsProfileOpen(true)}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
@@ -290,20 +355,6 @@ export default function ChatPage({ userProfile, onSave }) {
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 <line x1="12" y1="8" x2="12" y2="14"/>
                 <line x1="9" y1="11" x2="15" y2="11"/>
-              </svg>
-            </button>
-
-            {/* Profile */}
-            <button
-              id="open-profile-btn"
-              className="chat-header-icon-btn"
-              onClick={() => setIsProfileOpen(true)}
-              title="View Profile"
-              aria-label="Profile"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
               </svg>
             </button>
           </div>
@@ -402,18 +453,6 @@ export default function ChatPage({ userProfile, onSave }) {
           <p className="chat-disclaimer">Samsara is an AI companion, not a medical professional.</p>
         </div>
       </main>
-
-      {/* Profile Modal — only Name, Age, Gender */}
-      <ProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        userProfile={userProfile}
-        onSave={(profile) => {
-          onSave(profile)
-          setIsProfileOpen(false)
-        }}
-        required={false}
-      />
     </div>
   )
 }

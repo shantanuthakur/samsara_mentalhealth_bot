@@ -37,7 +37,7 @@ app = FastAPI(
 # CORS — frontend runs on port configured in .env
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[f"http://localhost:{Config.FRONTEND_PORT}", f"http://127.0.0.1:{Config.FRONTEND_PORT}"],
+    allow_origins=Config.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,9 +47,9 @@ app.add_middleware(
 # ─── Models ───────────────────────────────────────────────────────────────────
 
 class UserProfile(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
-    age: int = Field(..., ge=10, le=120)
-    gender: str = Field(..., min_length=1)
+    name: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1)
@@ -115,4 +115,4 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=Config.BACKEND_PORT, help=f"Port (default: {Config.BACKEND_PORT})")
     args = parser.parse_args()
 
-    uvicorn.run("app:app", host="0.0.0.0", port=args.port, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=args.port)

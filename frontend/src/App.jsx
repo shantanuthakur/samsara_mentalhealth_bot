@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import ChatPage from './pages/ChatPage'
-import ProfileModal from './components/ProfileModal'
 
 function App() {
   const [userProfile, setUserProfile] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
 
   useEffect(() => {
     const savedProfile = localStorage.getItem('samsara_user_profile')
@@ -16,17 +14,14 @@ function App() {
       } catch (e) {
         localStorage.removeItem('samsara_user_profile')
       }
-    } else {
-      // No profile found — force the modal open
-      setIsProfileModalOpen(true)
     }
     setIsLoading(false)
   }, [])
 
-  const handleProfileComplete = (profile) => {
-    localStorage.setItem('samsara_user_profile', JSON.stringify(profile))
-    setUserProfile(profile)
-    setIsProfileModalOpen(false)
+  const handleProfileUpdate = (profile) => {
+    const merged = { ...(userProfile || {}), ...profile }
+    localStorage.setItem('samsara_user_profile', JSON.stringify(merged))
+    setUserProfile(merged)
   }
 
   if (isLoading) return null
@@ -37,22 +32,8 @@ function App() {
 
       <ChatPage
         userProfile={userProfile}
-        onSave={handleProfileComplete}
-        onOpenProfile={() => setIsProfileModalOpen(true)}
+        onProfileUpdate={handleProfileUpdate}
       />
-
-      {/* Force-open profile modal when no profile exists */}
-      {isProfileModalOpen && (
-        <ProfileModal
-          isOpen={isProfileModalOpen}
-          onClose={() => {
-            if (userProfile) setIsProfileModalOpen(false)
-          }}
-          userProfile={userProfile}
-          onSave={handleProfileComplete}
-          required={!userProfile}
-        />
-      )}
     </>
   )
 }

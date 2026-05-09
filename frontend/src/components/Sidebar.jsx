@@ -1,6 +1,6 @@
 import monkIcon from '/monk.png'
 
-export default function Sidebar({ userProfile, onNewChat, onOpenProfile, isOpen, onClose }) {
+export default function Sidebar({ userProfile, onNewChat, isOpen, onClose }) {
   const getInitial = () => {
     if (userProfile?.name) return userProfile.name.charAt(0).toUpperCase()
     return '?'
@@ -46,38 +46,15 @@ export default function Sidebar({ userProfile, onNewChat, onOpenProfile, isOpen,
         New Conversation
       </button>
 
-      {/* Edit Profile Button */}
-      <button className="sidebar-btn" onClick={onOpenProfile} style={{ marginTop: '4px' }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-        Edit Profile
-      </button>
-
       {/* User Profile Card */}
-      <div 
-        className="sidebar-profile" 
-        onClick={onOpenProfile}
-        style={{ cursor: 'pointer', transition: 'all 0.2s' }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.transform = 'translateY(-2px)'
-          e.currentTarget.style.boxShadow = 'var(--shadow-glow)'
-          e.currentTarget.style.borderColor = 'var(--accent-teal)'
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)'
-          e.currentTarget.style.boxShadow = 'none'
-          e.currentTarget.style.borderColor = 'var(--border-subtle)'
-        }}
-      >
+      <div className="sidebar-profile">
         <div className="sidebar-profile-header" style={{ marginBottom: 0 }}>
           <div className="sidebar-profile-avatar">{getInitial()}</div>
           <div>
-            <div className="sidebar-profile-name">{userProfile?.name || 'User'}</div>
+            <div className="sidebar-profile-name">{userProfile?.name || 'New User'}</div>
             <div className="sidebar-profile-meta" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
-              Active now
+              {userProfile?.name ? 'Active now' : 'Getting to know you...'}
             </div>
           </div>
         </div>

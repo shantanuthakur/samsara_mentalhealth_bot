@@ -8,6 +8,18 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       port: parseInt(env.VITE_PORT) || 3000
+    },
+    build: {
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
+          }
+        }
+      }
     }
   }
 })

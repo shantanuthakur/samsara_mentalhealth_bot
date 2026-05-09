@@ -12,6 +12,15 @@ MENTAL_HEALTH_SYSTEM_PROMPT = """You are Samsara — a warm, genuine human compa
 - Use emojis sparingly (🌿 💚). No bullet points or markdown headers. Just natural conversation.
 - Always end with a genuine follow-up question.
 
+## Getting to Know the User (IMPORTANT):
+You must naturally learn about the user during the conversation. Do NOT ask all questions at once — weave them in naturally, one at a time, across multiple messages.
+- If you don't know the user's **name** yet (not in User Profile), ask what they'd like to be called early in the conversation.
+- If you don't know their **age** yet, ask casually at a natural point (e.g., "By the way, how old are you? It helps me relate better to what you're going through.").
+- If you don't know their **gender** yet, ask gently (e.g., "And just so I can connect with you better — how do you identify? Like, what pronouns feel right for you?").
+- If you don't know **how they're feeling** yet, ask warmly (e.g., "So tell me — how are you really doing today?").
+- Once you know something, do NOT ask for it again. Check the User Profile section to see what you already know.
+- Space these questions out naturally — never ask more than one personal question per message. Prioritize: name → feeling → age → gender.
+
 ## Age-Adaptive Tone (check user's age from profile):
 - **Teens (13-19)**: Supportive older sibling. Casual, validating, never preachy. Match their energy.
 - **Young Adults (20-35)**: Peer-level friend. Relatable, grounded. Acknowledge adulting chaos.
@@ -36,9 +45,11 @@ def is_greeting(message: str) -> bool:
 
 
 def generate_greeting_response(user_name: str = "") -> str:
-    """Generate a warm greeting response."""
-    name_part = f" {user_name}" if user_name else ""
-    return f"Hey{name_part}! 🌿 Really glad you're here. I'm Samsara — think of me as someone who's just here to listen, no judgment.\n\nHow are you doing today? Like, genuinely — how are you? 💚"
+    """Generate a warm greeting response that asks for their name if we don't have it."""
+    if user_name:
+        return f"Hey {user_name}! 🌿 So good to see you back. I'm always here whenever you need someone to talk to.\n\nHow are you doing today? Like, genuinely — how are you? 💚"
+    else:
+        return f"Hey there! 🌿 Really glad you're here. I'm Samsara — think of me as someone who's just here to listen, no judgment.\n\nFirst things first — what's your name? I'd love to know what to call you! 💚"
 
 
 def generate_answer(query: str, user_profile: dict = None, conversation_history: list = None) -> str:
@@ -66,18 +77,25 @@ def generate_answer(query: str, user_profile: dict = None, conversation_history:
     
     context = "\n\n".join(context_chunks) if context_chunks else "No specific context available."
     
-    # Build user context string
-    user_context = ""
+    # Build user context string showing what we know and what we don't
+    user_context = "\n\nUser Profile:"
     if user_profile:
-        parts = []
         if user_profile.get("name"):
-            parts.append(f"Name: {user_profile['name']}")
+            user_context += f"\n- Name: {user_profile['name']} (KNOWN — do NOT ask again)"
+        else:
+            user_context += "\n- Name: UNKNOWN (ask naturally if not asked recently)"
         if user_profile.get("age"):
-            parts.append(f"Age: {user_profile['age']}")
+            user_context += f"\n- Age: {user_profile['age']} (KNOWN — do NOT ask again)"
+        else:
+            user_context += "\n- Age: UNKNOWN (ask naturally when appropriate)"
         if user_profile.get("gender"):
-            parts.append(f"Gender: {user_profile['gender']}")
-        if parts:
-            user_context = f"\n\nUser Profile:\n" + ", ".join(parts)
+            user_context += f"\n- Gender: {user_profile['gender']} (KNOWN — do NOT ask again)"
+        else:
+            user_context += "\n- Gender: UNKNOWN (ask naturally when appropriate)"
+    else:
+        user_context += "\n- Name: UNKNOWN (ask naturally if not asked recently)"
+        user_context += "\n- Age: UNKNOWN (ask naturally when appropriate)"
+        user_context += "\n- Gender: UNKNOWN (ask naturally when appropriate)"
     
     prompt = f"""
 {user_context}
@@ -92,6 +110,7 @@ Respond with empathy and professionalism.
 You MUST formulate your advice and insights STRICTLY based on the provided 'Relevant Knowledge Base Context' above. 
 DO NOT use your general pre-trained knowledge to answer the user's questions or provide advice. 
 If the 'Relevant Knowledge Base Context' does not contain relevant information to address the user's message, you MUST gently inform the user that your knowledge is strictly limited to the specific counseling literature you have been provided, and you cannot answer their question. Then, gently redirect the conversation back to how they are feeling today.
+Remember: If any profile fields are UNKNOWN, weave ONE natural question about it into your response. Never ask more than one personal info question per response. Prioritize: name → feeling → age → gender.
 """
     
     # Build messages list
@@ -136,18 +155,25 @@ def generate_answer_stream(query: str, user_profile: dict = None, conversation_h
     
     context = "\n\n".join(context_chunks) if context_chunks else "No specific context available."
     
-    # Build user context string
-    user_context = ""
+    # Build user context string showing what we know and what we don't
+    user_context = "\n\nUser Profile:"
     if user_profile:
-        parts = []
         if user_profile.get("name"):
-            parts.append(f"Name: {user_profile['name']}")
+            user_context += f"\n- Name: {user_profile['name']} (KNOWN — do NOT ask again)"
+        else:
+            user_context += "\n- Name: UNKNOWN (ask naturally if not asked recently)"
         if user_profile.get("age"):
-            parts.append(f"Age: {user_profile['age']}")
+            user_context += f"\n- Age: {user_profile['age']} (KNOWN — do NOT ask again)"
+        else:
+            user_context += "\n- Age: UNKNOWN (ask naturally when appropriate)"
         if user_profile.get("gender"):
-            parts.append(f"Gender: {user_profile['gender']}")
-        if parts:
-            user_context = f"\n\nUser Profile:\n" + ", ".join(parts)
+            user_context += f"\n- Gender: {user_profile['gender']} (KNOWN — do NOT ask again)"
+        else:
+            user_context += "\n- Gender: UNKNOWN (ask naturally when appropriate)"
+    else:
+        user_context += "\n- Name: UNKNOWN (ask naturally if not asked recently)"
+        user_context += "\n- Age: UNKNOWN (ask naturally when appropriate)"
+        user_context += "\n- Gender: UNKNOWN (ask naturally when appropriate)"
     
     prompt = f"""
 {user_context}
@@ -162,6 +188,7 @@ Respond with empathy and professionalism.
 You MUST formulate your advice and insights STRICTLY based on the provided 'Relevant Knowledge Base Context' above. 
 DO NOT use your general pre-trained knowledge to answer the user's questions or provide advice. 
 If the 'Relevant Knowledge Base Context' does not contain relevant information to address the user's message, you MUST gently inform the user that your knowledge is strictly limited to the specific counseling literature you have been provided, and you cannot answer their question. Then, gently redirect the conversation back to how they are feeling today.
+Remember: If any profile fields are UNKNOWN, weave ONE natural question about it into your response. Never ask more than one personal info question per response. Prioritize: name → feeling → age → gender.
 """
     
     # Build messages list
